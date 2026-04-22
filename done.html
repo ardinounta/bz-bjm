@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Generator Laporan</title>
+
+<style>
+:root{
+  --bg:#0b0b0b;
+  --card:#121212;
+  --line:#2a2a2a;
+  --text:#f5f5f5;
+}
+body{margin:0;font-family:Arial;background:var(--bg);color:var(--text);}
+.container{max-width:800px;margin:auto;padding:15px}
+.header{display:flex;align-items:center;gap:10px;padding:12px;border-radius:12px;background:#111;border:1px solid var(--line);}
+.logo{width:40px;height:40px;background:#fff;color:#000;display:flex;align-items:center;justify-content:center;border-radius:10px;font-weight:bold;}
+.card{margin-top:12px;padding:12px;background:var(--card);border-radius:12px;border:1px solid var(--line);}
+textarea,input,select{width:100%;margin:5px 0;padding:9px;background:#0e0e0e;color:#fff;border:1px solid var(--line);border-radius:8px;}
+button{padding:10px;background:#fff;color:#000;border:none;border-radius:8px;cursor:pointer;margin-top:5px;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.inst-group{display:flex;gap:8px;margin-top:5px;}
+.inst-btn{flex:1;padding:8px;border-radius:8px;background:#0e0e0e;border:1px solid var(--line);text-align:center;cursor:pointer;}
+.inst-btn.active{background:#fff;color:#000;}
+.preview{white-space:pre-wrap;background:#0e0e0e;padding:10px;border-radius:8px;border:1px dashed var(--line);}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+  <div class="logo">B</div>
+  <div>
+    <b>Generator Laporan</b><br>
+    <small>Biznet Instalasi</small>
+  </div>
+</div>
+
+<div class="card">
+<textarea id="input" placeholder="Paste jadwal..."></textarea>
+<button onclick="loadData()">Load Data</button>
+</div>
+
+<div class="card">
+<select id="pilih" onchange="isi()">
+<option value="">-- pilih pelanggan --</option>
+</select>
+</div>
+
+<div class="card">
+
+<div class="row">
+<input id="nama" placeholder="Nama">
+<input id="pic" placeholder="No HP">
+</div>
+
+<input id="alamat" placeholder="Alamat">
+<input id="share" placeholder="Sharelok">
+
+<div class="row">
+<input id="wo" placeholder="WO">
+<input id="brim" placeholder="BRIM">
+</div>
+
+<input id="layanan" placeholder="Layanan">
+<input id="dp" placeholder="DP">
+
+<div class="row">
+<input id="sn" placeholder="SN">
+<select id="port">
+<option value="">-- pilih port --</option>
+</select>
+</div>
+
+<div class="row">
+<input id="odp" placeholder="Output">
+<input id="redaman" placeholder="Redaman">
+</div>
+
+<select id="panjang">
+<option value="">-- panjang --</option>
+<option>100M</option>
+<option>150M</option>
+<option>250M</option>
+<option>350M</option>
+</select>
+
+<div>
+<b>Installer:</b>
+<div class="inst-group">
+<div class="inst-btn" onclick="toggleInst(this)">FEBRI</div>
+<div class="inst-btn" onclick="toggleInst(this)">AGUNG</div>
+<div class="inst-btn" onclick="toggleInst(this)">RANTAM</div>
+</div>
+</div>
+
+<button onclick="copy()">Copy</button>
+<button onclick="preview()">Preview</button>
+<button onclick="sendWA()">Kirim ke WhatsApp</button>
+
+</div>
+
+<div class="card">
+<div id="preview" class="preview"></div>
+</div>
+
+</div>
+
+<script>
+let list=[];
+
+/* PORT AUTO */
+(function(){
+  const port = document.getElementById("port");
+  for(let i=1;i<=16;i++){
+    let opt=document.createElement("option");
+    opt.value=`16/${i}`;
+    opt.textContent=`16/${i}`;
+    port.appendChild(opt);
+  }
+})();
+
+function loadData(){
+  const text=document.getElementById("input").value;
+  const blocks=text.split(/\n(?=\d{2}:\d{2})/);
+  list=[];
+
+  blocks.forEach(b=>{
+    let lines=b.split("\n").map(x=>x.trim());
+    let data=lines.filter(x=>x.startsWith("- "));
+    if(data.length<7) return;
+
+    data=data.map(x=>x.replace("- ",""));
+
+    let dp="", pk="";
+
+    lines.forEach(x=>{
+      if(x.toUpperCase().includes("DP")){
+        dp=x.replace(/.*DP/i,"").trim();
+      }
+      if(x.toUpperCase().includes("PK")){
+        let m=x.match(/(\d+M)/i);
+        if(m) pk=m[1].toUpperCase();
+      }
+    });
+
+    list.push({
+      jam:(b.match(/\d{2}:\d{2}/)||[""])[0],
+      wo:data[0],
+      brim:data[1],
+      nama:data[2],
+      layanan:data[3],
+      alamat:data[4],
+      pic:data[5],
+      share:data[6],
+      dp:dp,
+      pk:pk
+    });
+  });
+
+  let s=document.getElementById("pilih");
+  s.innerHTML='<option value="">-- pilih pelanggan --</option>';
+
+  list.forEach((d,i)=>{
+    s.innerHTML+=`<option value="${i}">${d.jam} | ${d.nama}</option>`;
+  });
+}
+
+function isi(){
+  let i=document.getElementById("pilih").value;
+  if(i==="") return;
+
+  let d=list[i];
+
+  nama.value=d.nama;
+  alamat.value=d.alamat;
+  pic.value=d.pic;
+  share.value=d.share;
+  wo.value=d.wo;
+  brim.value=d.brim;
+  layanan.value=d.layanan;
+  dp.value=d.dp;
+
+  if(d.pk) panjang.value=d.pk;
+}
+
+function toggleInst(el){
+  el.classList.toggle("active");
+}
+
+function getInstaller(){
+  let arr=[];
+  document.querySelectorAll(".inst-btn.active").forEach(e=>{
+    arr.push(e.innerText);
+  });
+  return arr.join("-");
+}
+
+function build(){
+return `DONE
+
+NAMA    : ${nama.value}
+ALAMAT  : ${alamat.value}
+NO PIC  : ${pic.value}
+SHARELOK : ${share.value}
+
+WO      : ${wo.value}
+BRIM ID : ${brim.value}
+SN MODEM : ${sn.value}
+
+LAYANAN : ${layanan.value}
+
+KODE DP : ${dp.value}
+PORT DP : ${port.value}
+OUTPUT DP : ${odp.value}
+
+REDAMAN ONT DI SISTEM ONT : ${redaman.value}
+PANJANG TARIKAN : ${panjang.value}
+NAMA INSTALLER : ${getInstaller()}
+
+TERIMAKASIH BC BANJARARUM`;
+}
+
+function preview(){
+  document.getElementById("preview").textContent=build();
+}
+
+function copy(){
+  navigator.clipboard.writeText(build());
+  alert("copied");
+}
+
+/* WA PILIH TUJUAN */
+function sendWA(){
+  let text = encodeURIComponent(build());
+  window.open(`https://wa.me/?text=${text}`, '_blank');
+}
+</script>
+
+</body>
+</html>
